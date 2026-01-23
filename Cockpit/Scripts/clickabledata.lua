@@ -52,7 +52,6 @@ elements["PNT_40"] = default_2_position_tumb("Speedbrake", devices.SPEEDBRAKE, d
 -- electirc\engine
 -- elements["PNT_988"] = default_2_position_tumb("Electronics Power", devices.ELECTRIC_SYSTEM, Keys.PowerOnOff, 988)
 
-elements["PNT_987"] = default_button("Engine Start", devices.ENGINE_SYSTEM, device_commands.starter_push, 987)
 
 -- Mirrors
 -- elements["PNT_MIRROR_LEFT"] = default_2_position_tumb("Left Mirror - ON/OFF", 0, 1625, nil)
@@ -409,6 +408,10 @@ elements["PNT_997"] = default_2_position_tumb("Ejection Handle", devices.BAILOUT
 -- 	 o.use_OBB = true
 -- 	end
 -- end
+
+-- Custom Start Sequence
+elements["PNT_988"] = default_2_position_tumb("Electronics Power", devices.ELECTRIC_SYSTEM, Keys.PowerOnOff, 988)
+elements["PNT_989"] = default_2_position_tumb("Engine Start", devices.ENGINE, device_commands.Engine_Start, 989)
 
 
 
