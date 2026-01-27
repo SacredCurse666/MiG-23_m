@@ -577,11 +577,27 @@ Ny_acc.controller				  = controllers.base_gauge_VerticalAcceleration
 -- HYDRAULIC SYSTEM
 -----------------------------------------------------------------
 
-BusterHydroPressGauge                  = CreateGauge("parameter")
-BusterHydroPressGauge.parameter_name   = "BUSTER_HYDRO_PRESS"
-BusterHydroPressGauge.arg_number       = 123 -- Updated to user's argument ID
-BusterHydroPressGauge.input            = {0.0, 300.0} -- Scale from 0 to 300 kgf/cm^2
-BusterHydroPressGauge.output           = {0.0, 1.0}   -- Animation range (0 = 0 bar, 1 = 300 bar)
+-- BusterHydroPressGauge                  = CreateGauge("parameter")
+-- BusterHydroPressGauge.parameter_name   = "BUSTER_HYDRO_PRESS"
+-- BusterHydroPressGauge.arg_number       = 123 -- Updated to user's argument ID
+-- BusterHydroPressGauge.input            = {0.0, 300.0} -- Scale from 0 to 300 kgf/cm^2
+-- BusterHydroPressGauge.output           = {0.0, 1.0}   -- Animation range (0 = 0 bar, 1 = 300 bar)
+
+-----------------------------------------------------------------
+-- PNEUMATIC SYSTEM
+-----------------------------------------------------------------
+
+PneumoMainGauge                        = CreateGauge("parameter")
+PneumoMainGauge.parameter_name         = "PNEUMO_MAIN_PRESS"
+PneumoMainGauge.arg_number             = 123 
+PneumoMainGauge.input                  = {0.0, 300.0} 
+PneumoMainGauge.output                 = {0.0, 1.0}
+
+PneumoEmerGauge                        = CreateGauge("parameter")
+PneumoEmerGauge.parameter_name         = "PNEUMO_EMER_PRESS"
+PneumoEmerGauge.arg_number             = 124
+PneumoEmerGauge.input                  = {0.0, 300.0}
+PneumoEmerGauge.output                 = {0.0, 1.0}
 
 need_to_be_closed = true -- close lua state after initialization 
 

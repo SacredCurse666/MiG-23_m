@@ -665,7 +665,6 @@ device_commands =
     starter_push = __counter(),
     Engine_Start = __counter(),
     Engine_Stop = __counter(),
-    
     CPT_secondary_ejection_handle = __counter(),
                             jettison_canopy                    = __counter(),
                             -- --Most of these are dummy/placeholder.    -- tacan_antenna                   = __counter(),
