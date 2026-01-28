@@ -34,6 +34,8 @@ gear_flaps_closed:set(0)
 local timer = 1000
 
 local gear_state_counter
+local main_press_param = get_param_handle("PNEUMO_MAIN_PRESS")
+
 function post_initialize()
 local birth = LockOn_Options.init_conditions.birth_place
 	if birth == "GROUND_HOT" or birth == "GROUND_COLD" then --проверка состояние самолёта в воздухе или на земле
@@ -111,6 +113,9 @@ end
 -- end
 function update()
 
+	local current_pressure = main_press_param:get()
+	local can_move_gear = current_pressure > 20
+
 	--print_message_to_user("LANDING_GEAR_TARGET = ".. LANDING_GEAR_TARGET .. " LANDING_GEAR_STATE = " .. LANDING_GEAR_STATE)
 	if (LANDING_GEAR_STATE == 0) then
 		gear_nose_retracted:set(1)
@@ -122,13 +127,13 @@ function update()
 			gear_left_retracted:set(0)
 	end	
 
-	if LANDING_GEAR_STATE > LANDING_GEAR_TARGET then
+	if LANDING_GEAR_STATE > LANDING_GEAR_TARGET and can_move_gear then
 		LANDING_GEAR_STATE = LANDING_GEAR_STATE - GearCloseIncrement/1000
 		LANDING_GEAR_STATE = rounded(LANDING_GEAR_STATE,LANDING_GEAR_TARGET)
 		--print_message_to_user( " > LANDING_GEAR_STATE = " .. LANDING_GEAR_STATE)
 	end
 
-	if LANDING_GEAR_STATE < LANDING_GEAR_TARGET then
+	if LANDING_GEAR_STATE < LANDING_GEAR_TARGET and can_move_gear then
 		LANDING_GEAR_STATE = LANDING_GEAR_STATE + GearOpenIncrement/1000
 		LANDING_GEAR_STATE = rounded(LANDING_GEAR_STATE,LANDING_GEAR_TARGET)
 		--print_message_to_user( " < LANDING_GEAR_STATE = " .. LANDING_GEAR_STATE)
