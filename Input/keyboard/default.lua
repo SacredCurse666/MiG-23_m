@@ -297,6 +297,7 @@ keyCommands = {
     {combos = {{key = 'G'}}, down = Keys.PlaneGear, name = _('Landing Gear Up/Down'), category = _('Systems')},
     {combos = {{key = 'G', reformers = {'LCtrl'}}}, down = Keys.PlaneGearUp, name = _('Landing Gear Up'), category = _('Systems')},
     {combos = {{key = 'G', reformers = {'LShift'}}}, down = Keys.PlaneGearDown, name = _('Landing Gear Down'), category = _('Systems')},
+    {combos = {{key = 'E', reformers = {'LAlt'}}}, down = device_commands.emer_gear_release, up = device_commands.emer_gear_release, cockpit_device_id = 6, value_down = 1.0, value_up = 0.0, name = _('Emergency Landing Gear Extension'), category = _('Systems')},
 
     {combos = {{key = 'W'}}, down = Keys.BrakesOn, up = Keys.BrakesOff, name = _('Wheel Brake On'), category = _('Systems')},
     {combos = {{key = 'C', reformers = {'LCtrl'}}}, down = Keys.Canopy, name = _('Canopy Open/Close'), category = _('Systems')},

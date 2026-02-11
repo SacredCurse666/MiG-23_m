@@ -65,9 +65,15 @@ function update()
     -- 3. Расход при работе шасси (по дельте анимации)
     local gear_pos = get_aircraft_draw_argument_value(0)
     local gear_delta = math.abs(gear_pos - prev_gear_pos)
-    if gear_delta > 0 and main_pressure > 0 then
-        -- 1.0 изменения аргумента = GEAR_TOTAL_LOSS (14.7 единиц)
-        main_pressure = main_pressure - (gear_delta * GEAR_TOTAL_LOSS)
+    local gear_emer_active = get_param_handle("GEAR_EMER_ACTIVE"):get() > 0.5
+
+    if gear_delta > 0 then
+        if gear_emer_active and emer_pressure > 0 then
+             emer_pressure = emer_pressure - (gear_delta * GEAR_TOTAL_LOSS)
+        elseif not gear_emer_active and main_pressure > 0 then
+            -- 1.0 изменения аргумента = GEAR_TOTAL_LOSS (14.7 единиц)
+            main_pressure = main_pressure - (gear_delta * GEAR_TOTAL_LOSS)
+        end
     end
     prev_gear_pos = gear_pos
 
@@ -84,6 +90,7 @@ function update()
     -- Ограничители
     if main_pressure > MAX_PRESS then main_pressure = MAX_PRESS end
     if main_pressure < 0 then main_pressure = 0 end
+    if emer_pressure < 0 then emer_pressure = 0 end
 
     -- Передача в кабину
     main_press_param:set(main_pressure)
