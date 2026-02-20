@@ -606,19 +606,32 @@ PneumoEmerGauge.input                  = {0.0, 240.0}
 PneumoEmerGauge.output                 = {0.0, 1.0}
 
 BrakeLeftGauge                         = CreateGauge("parameter")
-BrakeLeftGauge.parameter_name          = "PNEUMO_BRAKE_L"
+BrakeLeftGauge.parameter_name          = "PNEUMO_LINE_MAIN"
 BrakeLeftGauge.arg_number              = 131
 BrakeLeftGauge.input                   = {0.0, 16.0} -- Gauge face is 0-16
 BrakeLeftGauge.output                  = {0.0, 1.0}
 
 BrakeRightGauge                        = CreateGauge("parameter")
-BrakeRightGauge.parameter_name         = "PNEUMO_BRAKE_R"
-BrakeRightGauge.arg_number             = 132
-BrakeRightGauge.input                  = {0.0, 16.0} -- Gauge face is 0-16
-BrakeRightGauge.output                 = {0.0, 1.0}
+BrakeRightGauge.parameter_name         = "PNEUMO_LINE_EMER"
+BrakeRightGauge.arg_number              = 132
+BrakeRightGauge.input                   = {0.0, 16.0} 
+BrakeRightGauge.output                  = {1.0, 0.0}
+
+-- Манометр МВ-12 (0–12 кгс/см²) - Тормозные камеры
+BrakeLeftWheelGauge                      = CreateGauge("parameter")
+BrakeLeftWheelGauge.parameter_name       = "PNEUMO_BRAKE_L"
+BrakeLeftWheelGauge.arg_number           = 133
+BrakeLeftWheelGauge.input                = {0.0, 12.0}
+BrakeLeftWheelGauge.output               = {0.0, 1.0}
+
+BrakeRightWheelGauge                     = CreateGauge("parameter")
+BrakeRightWheelGauge.parameter_name      = "PNEUMO_BRAKE_R"
+BrakeRightWheelGauge.arg_number           = 134
+BrakeRightWheelGauge.input                = {0.0, 12.0}
+BrakeRightWheelGauge.output               = {1.0, 0.0}
 
 
-need_to_be_closed = true -- close lua state after initialization 
+need_to_be_closed = false -- close lua state after initialization 
 
 
 

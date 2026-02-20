@@ -1,79 +1,62 @@
--- MiG-23M Pneumatic System - Stable Version
+-- MiG-23M Pneumatic System (Final Calibrated)
 local dev = GetSelf()
 make_default_activity(0.02) -- 50 Hz
 
 local sensor_data = get_base_data()
 
--- Use global handles to ensure they persist
-local p_main_press = get_param_handle("PNEUMO_MAIN_PRESS")
-local p_emer_press = get_param_handle("PNEUMO_EMER_PRESS")
-local p_brake_l    = get_param_handle("PNEUMO_BRAKE_L")
-local p_brake_r    = get_param_handle("PNEUMO_BRAKE_R")
+local main_tank = 200 
+local emer_tank = 240
 
--- State variables (persistent in this Lua state)
-local main_val = 0
-local emer_val = 240
+local cur_131 = 0
+local cur_132 = 0
+local cur_133 = 0
+local cur_134 = 0
 
 function post_initialize()
-    main_val = 0
-    emer_val = 240
-    p_main_press:set(main_val)
-    p_emer_press:set(emer_val)
-    print_message_to_user("PNEUMATIC SYSTEM: ONLINE")
-end
-
-function SetCommand(command, value)
-    -- Handle brake commands if they come through
+    print_message_to_user("PNEUMATIC SYSTEM: READY")
 end
 
 function update()
-    -- 1. Get Engine RPM
     local rpm = 0
-    if sensor_data.getEngineLeftRPM then
-        rpm = sensor_data.getEngineLeftRPM()
-        if rpm < 1.1 then rpm = rpm * 100 end
-    end
-
-    -- 2. Charging Logic
-    if rpm > 40 then
-        main_val = math.min(240, main_val + 0.1)
-    end
-
-    -- 3. Simple Brake Simulation (Direct Polling)
-    local brake_l_input = 0
-    local brake_r_input = 0
+    if sensor_data.getEngineLeftRPM then rpm = (sensor_data.getEngineLeftRPM() or 0) end
+    if rpm < 1.1 then rpm = rpm * 100 end
     
-    if sensor_data.getLeftWheelBrake then
-        brake_l_input = sensor_data.getLeftWheelBrake()
-    end
-    if sensor_data.getRightWheelBrake then
-        brake_r_input = sensor_data.getRightWheelBrake()
-    end
-
-    -- Apply brake pressure based on main tank
-    local target_l = math.min(10, main_val * brake_l_input)
-    local target_r = math.min(10, main_val * brake_r_input)
-
-    -- Smooth needles
-    local cur_l = p_brake_l:get() or 0
-    local cur_r = p_brake_r:get() or 0
-    p_brake_l:set(cur_l + (target_l - cur_l) * 0.2)
-    p_brake_r:set(cur_r + (target_r - cur_r) * 0.2)
-
-    -- 4. Consumption and Leaks
-    local main_cons = get_param_handle("PNEUMO_MAIN_CONSUMPTION"):get() or 0
-    local emer_cons = get_param_handle("PNEUMO_EMER_CONSUMPTION"):get() or 0
+    -- Получаем тормоза более надежно
+    local bl = sensor_data.getLeftWheelBrake() or 0
+    local br = sensor_data.getRightWheelBrake() or 0
+    -- Если тормоза по умолчанию 1.0, значит они инвертированы в DCS.
+    -- Простейшая логика - берем тормоза только при нажатии.
+    local brake_in = math.max(bl, br)
     
-    -- Subtract consumption and reset handles
-    main_val = math.max(0, main_val - main_cons - 0.001) 
-    emer_val = math.max(0, emer_val - emer_cons - 0.0005)
-    
-    get_param_handle("PNEUMO_MAIN_CONSUMPTION"):set(0)
-    get_param_handle("PNEUMO_EMER_CONSUMPTION"):set(0)
+    local rud = 0
+    if sensor_data.getRudderPosition then rud = (sensor_data.getRudderPosition() or 0) end
 
-    -- 5. Update Gauges
-    p_main_press:set(main_val)
-    p_emer_press:set(emer_val)
+    -- Зарядка
+    if rpm > 40 then main_tank = math.min(240, main_tank + 0.1) end
+    if brake_in > 0.1 then main_tank = math.max(0, main_tank - 0.05) end
+
+    -- Редукторы 0-16
+    local target_131 = math.min(13.0, main_tank)
+    local target_line_emer = math.min(14.0, emer_tank)
+    
+    -- МВ-12 (0-12)
+    local factor_l = 1.0 - math.max(0, rud) 
+    local factor_r = 1.0 - math.max(0, -rud)
+    local target_133 = target_131 * 0.77 * brake_in * factor_l
+    local target_134 = target_131 * 0.77 * brake_in * factor_r
+
+    -- Инерция
+    local f = 0.15
+    cur_131 = cur_131 + (target_131 - cur_131) * f
+    cur_132 = cur_132 + (target_line_emer - cur_132) * f
+    cur_133 = cur_133 + (target_133 - cur_133) * f
+    cur_134 = cur_134 + (target_134 - cur_134) * f
+
+    -- Запись
+    get_param_handle("PNEUMO_MAIN_PRESS"):set(main_tank)
+    get_param_handle("PNEUMO_EMER_PRESS"):set(emer_tank)
+    get_param_handle("PNEUMO_LINE_MAIN"):set(cur_131)
+    get_param_handle("PNEUMO_LINE_EMER"):set(cur_132) -- Для инвертированной стрелки
+    get_param_handle("PNEUMO_BRAKE_L"):set(cur_133)
+    get_param_handle("PNEUMO_BRAKE_R"):set(cur_134)
 end
-
-need_to_be_closed = false
