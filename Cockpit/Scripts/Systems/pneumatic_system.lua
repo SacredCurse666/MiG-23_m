@@ -1,101 +1,79 @@
+-- MiG-23M Pneumatic System - Stable Version
 local dev = GetSelf()
-local update_time = 0.05 
-make_default_activity(update_time)
+make_default_activity(0.02) -- 50 Hz
 
 local sensor_data = get_base_data()
 
-local main_press_param = get_param_handle("PNEUMO_MAIN_PRESS")
-local emer_press_param = get_param_handle("PNEUMO_EMER_PRESS")
+-- Use global handles to ensure they persist
+local p_main_press = get_param_handle("PNEUMO_MAIN_PRESS")
+local p_emer_press = get_param_handle("PNEUMO_EMER_PRESS")
+local p_brake_l    = get_param_handle("PNEUMO_BRAKE_L")
+local p_brake_r    = get_param_handle("PNEUMO_BRAKE_R")
 
--- Константы
-local MAX_PRESS = 210.0 
-local CHARGE_RATE = 25.0 -- Увеличил скорость зарядки
-local BRAKE_CONSUMPTION = 30.0 -- Расход тормозов (остается по времени)
-
-local GEAR_TOTAL_LOSS = 14.7 -- 7% от 210
-local CANOPY_TOTAL_LOSS = 14.7 -- 7% от 210
-
--- Состояние
-local main_pressure = 0.0
-local emer_pressure = 180.0 
-
-local prev_gear_pos = 0
-local prev_canopy_pos = 0
+-- State variables (persistent in this Lua state)
+local main_val = 0
+local emer_val = 240
 
 function post_initialize()
-    local birth = LockOn_Options.init_conditions.birth_place
-    if birth == "AIR_HOT" or birth == "GROUND_HOT" then
-        main_pressure = 205.0
-        prev_gear_pos = get_aircraft_draw_argument_value(0)
-        prev_canopy_pos = get_aircraft_draw_argument_value(38)
-    elseif birth == "GROUND_COLD" then
-        prev_gear_pos = 1.0 -- Шасси выпущены
-        prev_canopy_pos = 0.9 -- Фонарь открыт
-    end
+    main_val = 0
+    emer_val = 240
+    p_main_press:set(main_val)
+    p_emer_press:set(emer_val)
+    print_message_to_user("PNEUMATIC SYSTEM: ONLINE")
+end
+
+function SetCommand(command, value)
+    -- Handle brake commands if they come through
 end
 
 function update()
-    local dt = update_time
-    
-    -- Получаем RPM
+    -- 1. Get Engine RPM
     local rpm = 0
-    pcall(function() rpm = sensor_data.getEngineLeftRPM() or 0 end)
-    if rpm > 0 and rpm < 1.1 then rpm = rpm * 100 end
-
-    -- 1. Зарядка (только на земле)
-    local on_ground = (sensor_data.getWOW_LeftMainLandingGear() > 0) or (sensor_data.getWOW_RightMainLandingGear() > 0)
-    if rpm > 35 and on_ground then
-        local charge_coeff = (rpm - 35) / 65
-        if main_pressure < MAX_PRESS then
-            main_pressure = main_pressure + (CHARGE_RATE * charge_coeff * dt)
-        end
+    if sensor_data.getEngineLeftRPM then
+        rpm = sensor_data.getEngineLeftRPM()
+        if rpm < 1.1 then rpm = rpm * 100 end
     end
 
-    -- 2. Расход тормозов
-    local brake_val = 0
-    pcall(function() 
-        brake_val = math.max(sensor_data.getLeftMainLandingGearBrake() or 0, 
-                             sensor_data.getRightMainLandingGearBrake() or 0)
-    end)
+    -- 2. Charging Logic
+    if rpm > 40 then
+        main_val = math.min(240, main_val + 0.1)
+    end
+
+    -- 3. Simple Brake Simulation (Direct Polling)
+    local brake_l_input = 0
+    local brake_r_input = 0
     
-    if brake_val > 0.1 and main_pressure > 0 then
-        main_pressure = main_pressure - (BRAKE_CONSUMPTION * brake_val * dt)
+    if sensor_data.getLeftWheelBrake then
+        brake_l_input = sensor_data.getLeftWheelBrake()
+    end
+    if sensor_data.getRightWheelBrake then
+        brake_r_input = sensor_data.getRightWheelBrake()
     end
 
-    -- 3. Расход при работе шасси (по дельте анимации)
-    local gear_pos = get_aircraft_draw_argument_value(0)
-    local gear_delta = math.abs(gear_pos - prev_gear_pos)
-    local gear_emer_active = get_param_handle("GEAR_EMER_ACTIVE"):get() > 0.5
+    -- Apply brake pressure based on main tank
+    local target_l = math.min(10, main_val * brake_l_input)
+    local target_r = math.min(10, main_val * brake_r_input)
 
-    if gear_delta > 0 then
-        if gear_emer_active and emer_pressure > 0 then
-             emer_pressure = emer_pressure - (gear_delta * GEAR_TOTAL_LOSS)
-        elseif not gear_emer_active and main_pressure > 0 then
-            -- 1.0 изменения аргумента = GEAR_TOTAL_LOSS (14.7 единиц)
-            main_pressure = main_pressure - (gear_delta * GEAR_TOTAL_LOSS)
-        end
-    end
-    prev_gear_pos = gear_pos
+    -- Smooth needles
+    local cur_l = p_brake_l:get() or 0
+    local cur_r = p_brake_r:get() or 0
+    p_brake_l:set(cur_l + (target_l - cur_l) * 0.2)
+    p_brake_r:set(cur_r + (target_r - cur_r) * 0.2)
 
-    -- 4. Расход при движении фонаря (по дельте анимации)
-    local canopy_pos = get_aircraft_draw_argument_value(38)
-    local canopy_delta = math.abs(canopy_pos - prev_canopy_pos)
-    if canopy_delta > 0 and main_pressure > 0 then
-        -- 0.9 изменения аргумента = CANOPY_TOTAL_LOSS (14.7 единиц)
-        -- Следовательно, множитель = 14.7 / 0.9 = 16.333
-        main_pressure = main_pressure - (canopy_delta * (CANOPY_TOTAL_LOSS / 0.9))
-    end
-    prev_canopy_pos = canopy_pos
+    -- 4. Consumption and Leaks
+    local main_cons = get_param_handle("PNEUMO_MAIN_CONSUMPTION"):get() or 0
+    local emer_cons = get_param_handle("PNEUMO_EMER_CONSUMPTION"):get() or 0
+    
+    -- Subtract consumption and reset handles
+    main_val = math.max(0, main_val - main_cons - 0.001) 
+    emer_val = math.max(0, emer_val - emer_cons - 0.0005)
+    
+    get_param_handle("PNEUMO_MAIN_CONSUMPTION"):set(0)
+    get_param_handle("PNEUMO_EMER_CONSUMPTION"):set(0)
 
-    -- Ограничители
-    if main_pressure > MAX_PRESS then main_pressure = MAX_PRESS end
-    if main_pressure < 0 then main_pressure = 0 end
-    if emer_pressure < 0 then emer_pressure = 0 end
-
-    -- Передача в кабину
-    main_press_param:set(main_pressure)
-    emer_press_param:set(emer_pressure)
+    -- 5. Update Gauges
+    p_main_press:set(main_val)
+    p_emer_press:set(emer_val)
 end
 
-function SetCommand(command,value)
-end
+need_to_be_closed = false

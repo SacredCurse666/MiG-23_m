@@ -577,9 +577,15 @@ Ny_acc.controller				  = controllers.base_gauge_VerticalAcceleration
 -- HYDRAULIC SYSTEM
 -----------------------------------------------------------------
 
+MainHydroPressGauge                     = CreateGauge("parameter")
+MainHydroPressGauge.parameter_name      = "MAIN_HYDRO_PRESS"
+MainHydroPressGauge.arg_number          = 125
+MainHydroPressGauge.input               = {0.0, 250.0} -- Шкала до 250 кг/см2
+MainHydroPressGauge.output              = {0.0, 1.0}
+
 BoosterHydroPressGauge                  = CreateGauge("parameter")
 BoosterHydroPressGauge.parameter_name   = "BOOSTER_HYDRO_PRESS"
-BoosterHydroPressGauge.arg_number       = 126
+BoosterHydroPressGauge.arg_number       = 124
 BoosterHydroPressGauge.input            = {0.0, 250.0} -- Шкала до 250 кг/см2
 BoosterHydroPressGauge.output           = {0.0, 1.0}
 
@@ -589,15 +595,28 @@ BoosterHydroPressGauge.output           = {0.0, 1.0}
 
 PneumoMainGauge                        = CreateGauge("parameter")
 PneumoMainGauge.parameter_name         = "PNEUMO_MAIN_PRESS"
-PneumoMainGauge.arg_number             = 124 
-PneumoMainGauge.input                  = {0.0, 300.0} 
+PneumoMainGauge.arg_number             = 122 
+PneumoMainGauge.input                  = {0.0, 240.0} 
 PneumoMainGauge.output                 = {0.0, 1.0}
 
 PneumoEmerGauge                        = CreateGauge("parameter")
 PneumoEmerGauge.parameter_name         = "PNEUMO_EMER_PRESS"
-PneumoEmerGauge.arg_number             = 125
-PneumoEmerGauge.input                  = {0.0, 300.0}
+PneumoEmerGauge.arg_number             = 123
+PneumoEmerGauge.input                  = {0.0, 240.0}
 PneumoEmerGauge.output                 = {0.0, 1.0}
+
+BrakeLeftGauge                         = CreateGauge("parameter")
+BrakeLeftGauge.parameter_name          = "PNEUMO_BRAKE_L"
+BrakeLeftGauge.arg_number              = 131
+BrakeLeftGauge.input                   = {0.0, 16.0} -- Gauge face is 0-16
+BrakeLeftGauge.output                  = {0.0, 1.0}
+
+BrakeRightGauge                        = CreateGauge("parameter")
+BrakeRightGauge.parameter_name         = "PNEUMO_BRAKE_R"
+BrakeRightGauge.arg_number             = 132
+BrakeRightGauge.input                  = {0.0, 16.0} -- Gauge face is 0-16
+BrakeRightGauge.output                 = {0.0, 1.0}
+
 
 need_to_be_closed = true -- close lua state after initialization 
 

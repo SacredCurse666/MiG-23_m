@@ -1,5 +1,6 @@
 local dev = GetSelf()
 dofile(LockOn_Options.script_path.."command_defs.lua")
+dofile(LockOn_Options.script_path.."Systems/hydraulic_system_api.lua")
 dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 
 local sensor_data = get_base_data()
@@ -97,7 +98,8 @@ end
 
 local flaps_increment = update_time_step / FlapExtensionTimeSeconds -- sets the speed of flap animation
 function update()
-    if MOVING == 1 then
+    if get_hyd_utility_ok() then
+        if MOVING == 1 then
         if math.abs(FLAPS_STATE - FLAPS_TARGET) < flaps_increment then
             FLAPS_STATE = FLAPS_TARGET
             elseif FLAPS_STATE < FLAPS_TARGET then
@@ -114,6 +116,8 @@ function update()
             
 
         end
+    end
+
     end
 
     if FLAPS_STATE < 0 then

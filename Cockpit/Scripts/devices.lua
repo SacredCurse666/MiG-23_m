@@ -27,4 +27,5 @@ devices["BAILOUT"] 			    	= counter()
 devices["HYDRAULIC_SYSTEM"]			= counter()--8
 devices["ENGINE"]					= counter()
 devices["PNEUMATIC_SYSTEM"]			= counter()
+devices["BRAKES"]			        = counter()
 

@@ -1,5 +1,6 @@
 local dev = GetSelf()
 dofile(LockOn_Options.script_path.."command_defs.lua")
+dofile(LockOn_Options.script_path.."Systems/hydraulic_system_api.lua")
 dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 
 local sensor_data = get_base_data()
@@ -46,7 +47,8 @@ end
 
 local AirBrake_increment = update_time_step / FlapExtensionTimeSeconds -- sets the speed of flap animation
 function update()
-    if PlaneAirBrake_LastState == 0 then
+    if get_hyd_utility_ok() then
+        if PlaneAirBrake_LastState == 0 then
         PlaneAirBrake_State = PlaneAirBrake_State - AirBrake_increment
         -- print_message_to_user ("PlaneAirBrake_LastState Update DEC = " .. PlaneAirBrake_LastState)
         --PlaneAirBrake_LastState = 1
@@ -56,6 +58,8 @@ function update()
         -- print_message_to_user ("PlaneAirBrake_LastState Update INC = " .. PlaneAirBrake_LastState)
         -- PlaneAirBrake_LastState = 0
     end
+    end
+
     if PlaneAirBrake_State < 0 then
         -- print_message_to_user("FLAPS_STATE < 0 ")
         PlaneAirBrake_State = 0
