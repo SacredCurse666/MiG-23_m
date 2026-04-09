@@ -26,4 +26,6 @@ devices["BAILOUT"] 			    	= counter()
 --devices["D_RADAR_IDX"]				= counter() 
 devices["HYDRAULIC_SYSTEM"]			= counter()--8
 devices["ENGINE"]					= counter()
+devices["PNEUMATIC_SYSTEM"]			= counter()
+devices["BRAKES"]			        = counter()
 

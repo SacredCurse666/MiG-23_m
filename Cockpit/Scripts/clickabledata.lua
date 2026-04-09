@@ -52,7 +52,6 @@ elements["PNT_40"] = default_2_position_tumb("Speedbrake", devices.SPEEDBRAKE, d
 -- electirc\engine
 -- elements["PNT_988"] = default_2_position_tumb("Electronics Power", devices.ELECTRIC_SYSTEM, Keys.PowerOnOff, 988)
 
-elements["PNT_987"] = default_button("Engine Start", devices.ENGINE_SYSTEM, device_commands.starter_push, 987)
 
 -- Mirrors
 -- elements["PNT_MIRROR_LEFT"] = default_2_position_tumb("Left Mirror - ON/OFF", 0, 1625, nil)
@@ -351,10 +350,8 @@ elements["PNT_987"] = default_button("Engine Start", devices.ENGINE_SYSTEM, devi
 -- elements["PNT_513"] = default_button("Compass Push-to-Sync (unimplemented)", devices.COMPASS, device_commands.COMPASS_push_to_sync, 513) -- NO COMMAND
 
 -- -- T handles
--- elements["PNT_1240"] = default_2_position_tumb("Emergency Landing Gear Release Handle", devices.GEAR, device_commands.emer_gear_release,1240)
--- elements["PNT_1240"].animated = {true, true}
--- elements["PNT_1240"].animation_speed = {15, 15}
--- elements["PNT_1240"].sound = {{EMER_GEAR_PULL, EMER_GEAR_RELEASE}}
+elements["PNT_125"] = default_2_position_tumb("Emergency Landing Gear Release Handle", devices.GEAR_SYSTEM, device_commands.emer_gear_release, 126)
+elements["PNT_125"].animated = {true, true}
 -- elements["PNT_1241"] = default_2_position_tumb("Emergency Stores Release Handle", devices.WEAPON_SYSTEM, device_commands.emer_bomb_release,1241)
 -- elements["PNT_1241"].animated = {true, true}
 -- elements["PNT_1241"].animation_speed = {15, 15}
@@ -409,6 +406,10 @@ elements["PNT_997"] = default_2_position_tumb("Ejection Handle", devices.BAILOUT
 -- 	 o.use_OBB = true
 -- 	end
 -- end
+
+-- Custom Start Sequence
+elements["PNT_988"] = default_2_position_tumb("Electronics Power", devices.ELECTRIC_SYSTEM, Keys.PowerOnOff, 988)
+elements["PNT_989"] = default_2_position_tumb("Engine Start", devices.ENGINE, device_commands.Engine_Start, 989)
 
 
 
