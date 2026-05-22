@@ -53,6 +53,7 @@ creators[devices.LIGHT_PANEL]     = {"avLuaDevice", LockOn_Options.script_path..
 creators[devices.EGT_SYSTEM]      = {"avLuaDevice"           ,LockOn_Options.script_path.."Systems/EGT_System.lua"}  
 creators[devices.BAILOUT]         = {"avLuaDevice", LockOn_Options.script_path.."Systems/bailout.lua"}
 creators[devices.BRAKES]          = {"avLuaDevice", LockOn_Options.script_path.."Systems/brakes.lua"}
+creators[devices.OXYGEN_SYSTEM]   = {"avLuaDevice", LockOn_Options.script_path.."Systems/oxygen_system.lua"}
 --RADAROFF creators[devices.RADAR]			 = {"avSimpleRadar"			,LockOn_Options.script_path.."RADAR/Device/init.lua"}
 
 -- Indicators

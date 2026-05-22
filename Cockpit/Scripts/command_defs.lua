@@ -744,4 +744,6 @@ device_commands =
     -- -- radar altimiter
     -- radar_altitude_warning_axis_slew = __counter(),
 
+    OxygenToggle                    = __counter(),
+    OxygenMode                      = __counter(),
 }

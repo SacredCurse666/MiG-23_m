@@ -672,8 +672,6 @@ OxygenPressureGauge.arg_number      = 2017
 OxygenPressureGauge.input           = {0.0, 1.0}
 OxygenPressureGauge.output          = {0.0, 1.0}
 
-
-
 need_to_be_closed = false -- close lua state after initialization 
 
 

@@ -77,10 +77,10 @@ elements["PNT_989"] = default_3_position_tumb("Агрегат запуск: Пр
 elements["PNT_THROTTLE_LOCK"] = default_button("Защелка РУД", devices.ENGINE, device_commands.ThrottleLock, 2015)
 elements["PNT_THROTTLE_LOCK"].connector = "THROTTLE_POS"
 
-elements["PNT_OXYGEN_VALVE"] = default_2_position_tumb("Кислородный кран (ОТКР/ЗАКР)", devices.AVIONICS, device_commands.OxygenToggle, 2018)
-elements["PNT_OXYGEN_VALVE"].connector = "PNT_OXY_VALVE" 
+elements["PNT_OXY_VALVE"] = default_2_position_tumb("Кислородный кран (ОТКР/ЗАКР)", devices.OXYGEN_SYSTEM, device_commands.OxygenToggle, 2018)
+elements["PNT_OXY_VALVE"].connector = "OXY_VALVE_POS"
 
-elements["PNT_OXYGEN_PILOT_SWITCH"] = default_2_position_tumb("Кислород летчика (ВКЛ/ВЫКЛ)", devices.AVIONICS, device_commands.OxygenMode, 2019)
-elements["PNT_OXYGEN_PILOT_SWITCH"].connector = "PNT_OXY_PILOT"
+elements["PNT_OXY_PILOT_SWITCH"] = default_2_position_tumb("Кислород летчика (ВКЛ/ВЫКЛ)", devices.OXYGEN_SYSTEM, device_commands.OxygenMode, 2019)
+elements["PNT_OXY_PILOT_SWITCH"].connector = "OXY_PILOT_POS"
 
 return elements

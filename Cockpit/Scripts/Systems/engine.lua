@@ -64,13 +64,7 @@ function SetCommand(command, value)
                 -- Мгновенная визуальная фиксация
                 set_aircraft_draw_argument_value(2015, 1)
                 
-                if start_timer > 0 and start_mode == 1 then
-                    dispatch_action(nil, iCommandEnginesStart)
-                    print_message_to_user("РУД: МАЛЫЙ ГАЗ (ЗАЖИГАНИЕ)")
-                else
-                    dispatch_action(nil, iCommandEnginesStart)
-                    print_message_to_user("РУД: МАЛЫЙ ГАЗ")
-                end
+                print_message_to_user("РУД: МАЛЫЙ ГАЗ")
             else
                 if current_axis < 0.05 then
                     throttle_lock_pos = 0
@@ -121,11 +115,14 @@ function update()
     
     if is_starting then
         start_timer = start_timer + time_step
-        if start_timer < 15 then
-            -- RPM simulation...
-        elseif start_timer < 35 then
-            -- ...
-        else
+        
+        -- Trigger physical engine start in DCS at the right moment (e.g., after 5 seconds of cranking)
+        if start_timer > 5.0 and start_timer < 5.0 + time_step then
+            dispatch_action(nil, iCommandEnginesStart)
+            print_message_to_user(">>> ДВИГАТЕЛЬ: ЗАЖИГАНИЕ")
+        end
+
+        if start_timer > 35.0 then
             is_starting = false
             print_message_to_user(">>> ЗАПУСК ЗАВЕРШЕН")
         end
@@ -133,6 +130,21 @@ function update()
 
     -- Анимация РУД
     local throttle_axis = sensor_data.getThrottleLeftPosition()
+    
+    -- Debug RPM (Slowed down to approx once per second)
+    if not debug_timer then debug_timer = 0 end
+    debug_timer = debug_timer + time_step
+    if debug_timer > 1.0 then
+        local engine_rpm = sensor_data.getEngineLeftRPM() or 0
+        -- DCS can return RPM as 0-100+ or 0.0-1.1+. Normalize to percentage.
+        if engine_rpm > 0 and engine_rpm < 2.0 then 
+            engine_rpm = engine_rpm * 100 
+        end
+        
+        print_message_to_user("DEBUG RPM: " .. string.format("%.1f", engine_rpm) .. "%")
+        debug_timer = 0
+    end
+
     local target_anim = (throttle_lock_pos == 1) and (0.1 + throttle_axis * 0.9) or 0.0
     
     local smooth_anim = throttle_smoother(target_anim)
