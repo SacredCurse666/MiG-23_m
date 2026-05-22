@@ -28,7 +28,7 @@ local throttle_smoother = WMA(0.2, 0)
 local start_cover_pos = 0 
 local start_pto_pos = 0
 local start_mode = 0       
-local throttle_lock_pos = 0 
+local throttle_lock_pos = 0 -- 0: СТОП, 1: РАБОТА
 
 local engine_starting = get_param_handle("ENGINE_START_ACTIVE")
 local throttle_pos_param = get_param_handle("THROTTLE_POS")
@@ -80,8 +80,16 @@ function SetCommand(command, value)
             local current_axis = sensor_data.getThrottleLeftPosition()
             if throttle_lock_pos == 0 then 
                 throttle_lock_pos = 1
-                dispatch_action(nil, iCommandEnginesStart)
-                print_message_to_user("РУД: МАЛЫЙ ГАЗ (ЗАЩЕЛКА СНЯТА)")
+                
+                -- Если идет цикл запуска, то снятие защелки инициирует подачу топлива
+                if start_timer > 0 and start_mode == 1 then
+                    dispatch_action(nil, iCommandEnginesStart)
+                    print_message_to_user("РУД: МАЛЫЙ ГАЗ (ПОДАЧА ТОПЛИВА)")
+                else
+                    -- Просто снятие для горячего старта/в воздухе
+                    dispatch_action(nil, iCommandEnginesStart)
+                    print_message_to_user("РУД: МАЛЫЙ ГАЗ")
+                end
             else
                 if current_axis < 0.05 then
                     throttle_lock_pos = 0
@@ -126,10 +134,18 @@ function SetCommand(command, value)
                 print_message_to_user("ИНФО: Цикл уже идет")
             else
                 if start_mode == 1 then
-                    print_message_to_user(">>> ЗАПУСК...")
-                    engine_starting:set(1)
                     start_timer = start_duration
-                    dispatch_action(nil, iCommandEnginesStart)
+                    engine_starting:set(1)
+                    
+                    if throttle_lock_pos == 1 then
+                        -- РУД уже выдвинут, запускаем немедленно
+                        dispatch_action(nil, iCommandEnginesStart)
+                        print_message_to_user(">>> ЗАПУСК...")
+                    else
+                        -- РУД в СТОП, только холодная раскрутка
+                        print_message_to_user(">>> ЗАПУСК: РАСКРУТКА... (ЖДЕМ РУД)")
+                        -- Системную команду СТАРТ НЕ посылаем до снятия защелки
+                    end
                 elseif start_mode == -1 then
                     print_message_to_user(">>> ПРОКРУТКА...")
                     start_timer = 20.0
@@ -151,6 +167,10 @@ local timer = 0
 
 function update()
     local rpm = sensor_data.getEngineLeftRPM()
+    local pumpI_ok = get_param_handle("FUEL_PUMP_EXPI_OK"):get()
+    local pumpII_ok = get_param_handle("FUEL_PUMP_EXPII_OK"):get()
+    
+    -- ЛОГИКА АНИМАЦИИ РУД
     local throttle_axis = sensor_data.getThrottleLeftPosition()
     local target_anim = 0
     
@@ -163,6 +183,11 @@ function update()
     local smooth_anim = throttle_smoother(target_anim)
     throttle_pos_param:set(smooth_anim)
     set_aircraft_draw_argument_value(2016, smooth_anim)
+
+    -- Если РУД в положении СТОП, а обороты аномально высокие — принудительная отсечка
+    if throttle_lock_pos == 0 and rpm > 15 and engine_starting:get() == 0 then
+         dispatch_action(nil, iCommandEnginesStop)
+    end
 
     if start_timer > 0 then
         start_timer = start_timer - update_time_step
