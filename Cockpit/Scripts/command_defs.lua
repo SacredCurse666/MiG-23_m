@@ -283,6 +283,8 @@ Keys =
 	
     AFCSStabAugToggle              = __custom_counter(),
     OxygenToggle                   = __custom_counter(),
+    OxygenMode                     = __custom_counter(),
+
     RadarAltToggle                 = __custom_counter(),
     RadarAltWarningStartUp         = __custom_counter(),
     RadarAltWarningStartDown       = __custom_counter(),

@@ -664,7 +664,14 @@ UVP_Needle_Gauge                  = CreateGauge("parameter")
 UVP_Needle_Gauge.parameter_name   = "UVP_NEEDLE"
 UVP_Needle_Gauge.arg_number       = 2007
 UVP_Needle_Gauge.input            = {0, 1}
-UVP_Needle_Gauge.output           = {0, 1}
+UVP_Needle_Gauge.output             = {0.0, 1.0}
+
+OxygenPressureGauge                 = CreateGauge("parameter")
+OxygenPressureGauge.parameter_name  = "OXY_OVER_PRESS"
+OxygenPressureGauge.arg_number      = 2017
+OxygenPressureGauge.input           = {0.0, 1.0}
+OxygenPressureGauge.output          = {0.0, 1.0}
+
 
 
 need_to_be_closed = false -- close lua state after initialization 
