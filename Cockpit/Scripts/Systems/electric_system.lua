@@ -136,15 +136,21 @@ function post_initialize()
         dc_gen_on = true
         ac_gen_on = true
         battery_charge = 1.0
+        
+        -- Синхронизация тумблеров в кабине
+        electric_system:performClickableAction(device_commands.BatteryExtSwitch, 1, true)
+        electric_system:performClickableAction(device_commands.GeneratorDCSwitch, 1, true)
+        electric_system:performClickableAction(device_commands.GeneratorACSwitch, 1, true)
     elseif birth=="GROUND_COLD" then
         battery_ext_pos = 0
         dc_gen_on = false
         ac_gen_on = false
-        battery_charge = 0.0 -- ПОЛНЫЙ НОЛЬ
+        battery_charge = 1.0 -- Аккумулятор заряжен для холодного старта
     end
 end
 
 function SetCommand(command, value)
+    print_message_to_user(string.format("ELEC CMD: %d | Value: %.2f", command, value))
     if command == device_commands.BatteryExtSwitch then
         battery_ext_pos = value
     elseif command == device_commands.GeneratorDCSwitch then

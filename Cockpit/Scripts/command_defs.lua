@@ -746,4 +746,5 @@ device_commands =
 
     OxygenToggle                    = __counter(),
     OxygenMode                      = __counter(),
+    LandingLightSwitch              = __counter(),
 }

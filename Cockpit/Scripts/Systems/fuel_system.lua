@@ -27,6 +27,12 @@ function post_initialize()
         pump_tank3_pos = 1
         pump_expI_pos = 1
         pump_expII_pos = 1
+        
+        -- Синхронизация тумблеров в кабине
+        fuel_system:performClickableAction(device_commands.FuelPump_Tank1, 1, true)
+        fuel_system:performClickableAction(device_commands.FuelPump_Tank3, 1, true)
+        fuel_system:performClickableAction(device_commands.FuelPump_ExpI, 1, true)
+        fuel_system:performClickableAction(device_commands.FuelPump_ExpII, 1, true)
     end
     
     set_aircraft_draw_argument_value(2008, pump_tank1_pos)
@@ -51,27 +57,23 @@ function update()
 end
 
 function SetCommand(command, value)
-    local function update_tumb(current, val)
-        local res = current + val
-        if res > 1 then res = 1 end
-        if res < 0 then res = 0 end
-        return res
-    end
+    -- Отладочное сообщение для любого нажатия в топливной системе
+    print_message_to_user(string.format("FUEL CMD: %d | Value: %.2f", command, value))
 
     if command == device_commands.FuelPump_Tank1 then
-        pump_tank1_pos = update_tumb(pump_tank1_pos, value)
+        pump_tank1_pos = value
         set_aircraft_draw_argument_value(2008, pump_tank1_pos)
         print_message_to_user("Насос бака 1: " .. (pump_tank1_pos > 0.5 and "ВКЛ" or "ВЫКЛ"))
     elseif command == device_commands.FuelPump_Tank3 then
-        pump_tank3_pos = update_tumb(pump_tank3_pos, value)
+        pump_tank3_pos = value
         set_aircraft_draw_argument_value(2009, pump_tank3_pos)
         print_message_to_user("Насос бака 3: " .. (pump_tank3_pos > 0.5 and "ВКЛ" or "ВЫКЛ"))
     elseif command == device_commands.FuelPump_ExpI then
-        pump_expI_pos = update_tumb(pump_expI_pos, value)
+        pump_expI_pos = value
         set_aircraft_draw_argument_value(2010, pump_expI_pos)
         print_message_to_user("Расходный насос I: " .. (pump_expI_pos > 0.5 and "ВКЛ" or "ВЫКЛ"))
     elseif command == device_commands.FuelPump_ExpII then
-        pump_expII_pos = update_tumb(pump_expII_pos, value)
+        pump_expII_pos = value
         set_aircraft_draw_argument_value(2011, pump_expII_pos)
         print_message_to_user("Расходный насос II: " .. (pump_expII_pos > 0.5 and "ВКЛ" or "ВЫКЛ"))
     end

@@ -1,0 +1,43 @@
+-- ... (предположим, начало файла такое же, я заменяю только блок с огнями) ...
+	},
+	
+	lights_data = {
+		typename = "collection",
+		lights = {
+			[1] = { -- BEACONS
+				typename = "collection",
+				lights = {
+					{typename = "natostrobelight", connector = "RED_BEACON_T", argument_1 = 198, period = 1.2, phase_shift = 0},
+					{typename = "natostrobelight", connector = "RED_BEACON_B", argument_1 = 199, period = 1.2, phase_shift = 0}
+				}
+			},
+			[2] = { -- LANDING LIGHTS
+				typename = "collection",
+				lights = {
+					{typename = "spotlight", connector = "LEFT_MAIN_SPOT", argument = 209, proto = "C-102", color = {1, 1, 1}, brightness = 10, range = 500},
+					{typename = "spotlight", connector = "RIGHT_MAIN_SPOT", argument = 210, proto = "C-102", color = {1, 1, 1}, brightness = 10, range = 500},
+					{typename = "spotlight", connector = "NOSE_TAXI_SPOT", argument = 208, proto = "C-102", color = {1, 1, 1}, brightness = 8, range = 300},
+				}
+			},
+			[3] = { -- NAV LIGHTS
+				typename = "collection",
+				lights = {
+					{typename = "omnilight", connector = "RED_POS_L", color = {0.99, 0.11, 0.3}, argument = 190},
+					{typename = "omnilight", connector = "GREEN_POS_R", color = {0, 0.894, 0.6}, argument = 191},
+					{typename = "omnilight", connector = "RED_UP_L_REAR", color = {0.99, 0.11, 0.3}, argument = 192},
+					{typename = "omnilight", connector = "RED_UP_R_REAR", color = {0.99, 0.11, 0.3}, argument = 193},
+					{typename = "omnilight", connector = "WHITE_DN_L_REAR", color = {1, 1, 1}, argument = 194},
+					{typename = "omnilight", connector = "WHITE_DN_R_REAR", color = {1, 1, 1}, argument = 195},
+				}
+			},
+			[4] = { -- FORMATION
+				typename = "collection",
+				lights = {
+					{typename = "omnilight", connector = "WHITE_FORM_TOP", color = {1, 1, 1}, argument = 200}
+				}
+			}
+		}
+	}
+}
+
+add_aircraft(MiG_23m)

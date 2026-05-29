@@ -21,16 +21,16 @@ local function WMA(weight, val)
     end
 end
 
-local throttle_smoother = WMA(0.2, 0)
-
 -- Состояние систем
 local start_cover_pos = 0 
 local start_pto_pos = 0
 local start_mode = 0       
 local throttle_lock_pos = 0 
 
-local engine_starting = get_param_handle("ENGINE_START_ACTIVE")
 local throttle_pos_param = get_param_handle("THROTTLE_POS")
+local throttle_smoother = nil -- Будет инициализирован в post_initialize
+
+local engine_starting = get_param_handle("ENGINE_START_ACTIVE")
 local start_timer = 0
 local start_duration = 35.0 
 local is_starting = false
@@ -46,17 +46,35 @@ function post_initialize()
     local birth = LockOn_Options.init_conditions.birth_place
     if birth=="GROUND_HOT" or birth=="AIR_HOT" then
         throttle_lock_pos = 1
-        throttle_pos_param:set(0.1)
+        local init_throttle = 0.1
+        throttle_pos_param:set(init_throttle)
+        throttle_smoother = WMA(0.2, init_throttle) -- Стартуем с 0.1
+        set_aircraft_draw_argument_value(2016, init_throttle) -- Визуальный РУД сразу на МГ
+        
+        -- Синхронизация защелки РУД (аргумент 2015)
+        
+        -- При горячем старте крышка кнопки запуска должна быть закрыта (0)
+        start_cover_pos = 0
+        dev:performClickableAction(device_commands.StartCover, 0, true)
+        
+        -- Запуск ПТО должен быть ВКЛ (1)
+        start_pto_pos = 1
+        dev:performClickableAction(device_commands.StartPTO, 1, true)
     else
         throttle_lock_pos = 0
         throttle_pos_param:set(0.0)
+        throttle_smoother = WMA(0.2, 0.0) -- Стартуем с 0.0
+        set_aircraft_draw_argument_value(2016, 0.0)
+        
+        start_pto_pos = 0
     end
     set_aircraft_draw_argument_value(2015, throttle_lock_pos)
+    set_aircraft_draw_argument_value(2014, start_pto_pos)
 end
 
 function SetCommand(command, value)
+    print_message_to_user(string.format("ENGINE CMD: %d | Value: %.2f", command, value))
     if command == device_commands.ThrottleLock then
-        print_message_to_user("DEBUG: Клик защелки, Value: " .. value)
         if value == 1 then 
             local current_axis = sensor_data.getThrottleLeftPosition()
             if throttle_lock_pos == 0 then 

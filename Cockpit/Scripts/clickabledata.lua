@@ -83,4 +83,6 @@ elements["PNT_OXY_VALVE"].connector = "OXY_VALVE_POS"
 elements["PNT_OXY_PILOT_SWITCH"] = default_2_position_tumb("Кислород летчика (ВКЛ/ВЫКЛ)", devices.OXYGEN_SYSTEM, device_commands.OxygenMode, 2019)
 elements["PNT_OXY_PILOT_SWITCH"].connector = "OXY_PILOT_POS"
 
+elements["PNT_43"] = default_3_position_tumb("Переключатель фар: Выкл - Рулежный - Посадочный", devices.LIGHT_PANEL, device_commands.LandingLightSwitch, 43)
+
 return elements

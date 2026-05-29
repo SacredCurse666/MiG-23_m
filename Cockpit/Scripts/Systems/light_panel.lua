@@ -1,7 +1,8 @@
 local dev = GetSelf()
 dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 dofile(LockOn_Options.script_path.."command_defs.lua")
---dofile(LockOn_Options.script_path.."Systems/electric_system_api.lua")
+device_commands = Keys
+dofile(LockOn_Options.script_path.."Systems/electric_system_api.lua")
 dofile(LockOn_Options.script_path.."utils.lua")
 dofile(LockOn_Options.script_path.."Systems/gear_system.lua")
 
@@ -56,6 +57,16 @@ engine_power_afterburn:set(0)
 local wing_warning = get_param_handle("WING_WARNING")
 wing_warning:set(0)
 
+-- Landing Lights Parameters
+local gear_nose_released = get_param_handle("GEAR_NOSE_RELEASED")
+local gear_left_released = get_param_handle("GEAR_LEFT_RELEASED")
+local gear_right_released = get_param_handle("GEAR_RIGHT_RELEASED")
+
+local landing_light_switch_pos = -1.0 -- Default: Off
+local land_light_left_ext = 0.0
+local land_light_right_ext = 0.0
+local land_light_anim_speed = 0.02 -- Animation speed
+local last_debug_state = ""
 
 local pitch_trim_gauge = WMA(0.15,0)
 local yaw_trim_gauge = WMA(0.15,0)
@@ -68,6 +79,7 @@ dev:listen_command(Keys.TrimLeft)
 dev:listen_command(Keys.TrimRightRudder)
 dev:listen_command(Keys.TrimLeftRudder)
 dev:listen_command(Keys.TrimCancel)
+dev:listen_command(device_commands.LandingLightSwitch)
 -- коэффициенты --
 local optionsData_trimSpeedPitch =  1
 local optionsData_trimSpeedRoll =  1
@@ -101,6 +113,23 @@ function post_initialize()
     -- engine_power_max:set(0)
     -- engine_power_afterburn:set(0)
     --print_message_to_user ("end initialize ")
+    
+    local birth = LockOn_Options.init_conditions.birth_place
+    if birth == "GROUND_HOT" then
+        landing_light_switch_pos = 0.0 -- Рулежный
+        land_light_left_ext = 1.0
+        land_light_right_ext = 1.0
+        dev:performClickableAction(device_commands.LandingLightSwitch, 0.0, true)
+    elseif birth == "AIR_HOT" then
+        landing_light_switch_pos = -1.0 -- Выкл
+        land_light_left_ext = 0.0
+        land_light_right_ext = 0.0
+        dev:performClickableAction(device_commands.LandingLightSwitch, -1.0, true)
+    else
+        landing_light_switch_pos = -1.0 -- Холодный старт
+        land_light_left_ext = 0.0
+        land_light_right_ext = 0.0
+    end
 end
 
 function SetCommand(command,value)
@@ -142,7 +171,8 @@ function SetCommand(command,value)
         dispatch_action(nil, iCommandPlaneRudder, value * -0.5 - 0.5)
     elseif command == device_commands.rudder_axis_right then
         dispatch_action(nil, iCommandPlaneRudder, value * 0.5 + 0.5)
-
+    elseif command == device_commands.LandingLightSwitch then
+        landing_light_switch_pos = value
     -- elseif command == Keys.ShowControls then
     --     SHOW_CONTROLS:set(1-SHOW_CONTROLS:get())
     end
@@ -151,8 +181,107 @@ end
 
 local prev_trim_override = trim_override
 
+function update_landing_lights()
+    -- Проверка выпуска шасси (все 3 стойки должны быть выпущены > 0.5)
+    local g_nose = gear_nose_released:get()
+    local g_left = gear_left_released:get()
+    local g_right = gear_right_released:get()
+    local gear_ok = g_nose > 0.5 and g_left > 0.5 and g_right > 0.5
+    
+    -- Проверка электропитания (DC шина)
+    local power_ok = get_elec_primary_dc_ok()
+    
+    local target_left_ext = 0
+    local target_right_ext = 0
+    local brightness_208 = 0 -- Передняя
+    local brightness_209 = 0 -- Левая
+    local brightness_210 = 0 -- Правая
+    
+    local mode_name = "ВЫКЛ"
+    
+    if gear_ok then
+        if landing_light_switch_pos == -1.0 then -- ВЫКЛЮЧЕНО / УБРАНО
+            target_left_ext = 0
+            target_right_ext = 0
+            brightness_208 = 0
+            brightness_209 = 0
+            brightness_210 = 0
+            mode_name = "ВЫКЛ"
+        elseif landing_light_switch_pos == 0.0 then -- РУЛЕЖНЫЙ (все 3 выпущены и горят)
+            target_left_ext = 1.0
+            target_right_ext = 1.0
+            brightness_208 = 1.0 -- 100%
+            brightness_210 = 1.0 -- 100%
+            brightness_209 = 0.5 -- 50%
+            mode_name = "РУЛЕЖНЫЙ"
+        elseif landing_light_switch_pos == 1.0 then -- ПОСАДОЧНЫЙ (асимметрия)
+            target_left_ext = 1.0
+            target_right_ext = 0.0 -- Складывается
+            brightness_209 = 1.0 -- 100%
+            brightness_208 = 0.0 -- Выкл
+            brightness_210 = 0.0 -- Выкл
+            mode_name = "ПОСАДОЧНЫЙ"
+        end
+    else
+        -- Шасси не выпущено - всё выключаем и убираем
+        target_left_ext = 0
+        target_right_ext = 0
+        brightness_208 = 0
+        brightness_209 = 0
+        brightness_210 = 0
+        mode_name = "ШАССИ УБРАНО (БЛОКИРОВКА)"
+    end
+
+    -- Если нет электричества, свет гаснет независимо от режима
+    if not power_ok then
+        brightness_208 = 0
+        brightness_209 = 0
+        brightness_210 = 0
+        mode_name = mode_name .. " (БЕЗ ПИТАНИЯ)"
+    end
+    
+    -- Вывод отладочных сообщений при изменении состояния
+    local current_debug = string.format("LL Mode: %s | Gear: %.1f/%.1f/%.1f | Pwr: %s", 
+                                        mode_name, g_nose, g_left, g_right, power_ok and "OK" or "OFF")
+    if current_debug ~= last_debug_state then
+        print_message_to_user(current_debug)
+        last_debug_state = current_debug
+    end
+    
+    -- Плавная анимация выпуска/уборки (аргументы 51 и 52)
+    -- Если НЕТ питания, механизмы НЕ двигаются (замерзают в текущем положении)
+    if power_ok then
+        if land_light_left_ext < target_left_ext then
+            land_light_left_ext = math.min(target_left_ext, land_light_left_ext + land_light_anim_speed)
+        elseif land_light_left_ext > target_left_ext then
+            land_light_left_ext = math.max(target_left_ext, land_light_left_ext - land_light_anim_speed)
+        end
+        
+        if land_light_right_ext < target_right_ext then
+            land_light_right_ext = math.min(target_right_ext, land_light_right_ext + land_light_anim_speed)
+        elseif land_light_right_ext > target_right_ext then
+            land_light_right_ext = math.max(target_right_ext, land_light_right_ext - land_light_anim_speed)
+        end
+    end
+    
+    -- Установка аргументов анимации выпуска
+    set_aircraft_draw_argument_value(51, land_light_left_ext)
+    set_aircraft_draw_argument_value(52, land_light_right_ext)
+    
+    -- Установка яркости фар (только если шасси выпущено и есть питание, иначе 0)
+    if not gear_ok or not power_ok then
+        brightness_208 = 0
+        brightness_209 = 0
+        brightness_210 = 0
+    end
+    
+    set_aircraft_draw_argument_value(208, brightness_208)
+    set_aircraft_draw_argument_value(209, brightness_209)
+    set_aircraft_draw_argument_value(210, brightness_210)
+end
 
 function update()
+    update_landing_lights()
     -- Индикатор выпуска крыла
     -- print_message_to_user("LANDING_GEAR_STATE ")
     -- local current_gear_state = LANDING_GEAR_STATE
